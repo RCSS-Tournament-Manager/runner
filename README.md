@@ -1,67 +1,77 @@
 # runner
-The program that runs the games and sends the results to the manager backend.
-
-## Runner model
-
-### MessageBroker
-- MessageQueue
-- message-handle
-- MessageBusId
-- ConnectionStatus [Array] [Up, Down, non-responsive]
-
-### RunnerManager - Master
-- > Runner [Array]
-- link to MessageBroker
-- GameHandler
-- lastHeartBeat
-- > Groups [Array]
-- > Match [Array]
-
-### Runner - Slave
-- id
-- name
-- Runnerstatus [running, waiting, stopped]
-- tags [Array]
-- > RunnerServer
-
-### RunnerServer
-- id
-- ip
-- status [Up, Down, non-responsive]
-
-### Group
-- id
-- name
-- type [group, steplader, ...]
-- > Teams [Array]
-- > RCSSServerConfig
-- stepLadderState 
-- status [noStatus, running, ended, stopped]
+The program that runs the games using docker and store the logs and events in S3 and RabbitMQ.
 
 
-### Team - S3
-- id
-- name
+## Development
 
-### RCSSServerConfig - S3
-- id
-- name
+1. Clone the repository
+2. Create a virtual environment
+    ```bash
+    python3 -m pipenv install
+    python3 -m pipenv shell
+    ```
+3. Copy the `.env.example` file to `.env` and update the values
+4. Run the docker-compose file
+    ```bash
+    docker-compose up -d
+    ```
+5. Run the program
+    ```bash
+    pipenv run python runner.py
+    ```
 
-### Match
-- id
-- leftTeam > Team
-- rightTeam > Team
-- > ServerConfig
-- > Runner
-- > Group
-- leftTeamScore
-- rightTeamScore
-- leftTeamPenaltyScore
-- rightTeamPenaltyScore
-- status [noStatus,error , inQueue, running, ended, stopped]
-- priority
-- ScheluedTime [timestamp]
-- StartTime [timestamp]
-- EndTime [timestamp]
-- gameLog > FileUpload - S3
-- teamsLog > FileUpload - S3
+
+## Testing
+
+* To access the RabbitMQ Manager in the test environment, use the following link:
+    [http://localhost:15672/](http://localhost:15672/)
+    the username and password are in the `.env` file.
+    demo username: `test`
+    demo password: `test`
+
+* To access the Minio in the test environment, use the following link:
+    [http://localhost:9000/](http://localhost:9000/)
+    the access key and secret key are in the `.env` file.
+    demo access key: `minioadmin`
+    demo secret key: `minioadmin`
+
+
+
+
+
+
+
+# TODO
+
+### RUN Match
+- [ ] check the validation of the message
+- [ ] loop trough all the keys in the message and add "client" field to external connections
+- [ ] if the external connection is not available, create the connection class and put it on client field
+- [ ] run the match
+- [ ] create tasks for streams
+
+
+
+
+
+# listen to the rabbitmq queue
+# on message received, log the message
+# if the message is shutdown, exit the loop
+# if the message is to stop the match, stop the match
+# if the message is to start a new match, start a new match
+# to start a new match, first check the massage format is correct
+# if the message format is incorrect, let the rabbitmq know that the message format is incorrect
+# if the match is already running, let the rabbitmq know that the match is already running
+# if the message format is correct, retrieve the team details
+# if the team details are correct, get the teams images from docker hub
+# if the images are not available, download the images from docker registry
+# if the images are available, start the match with the given configuration
+# let the rabbitmq know that the match has started
+# if the match is stopped, let the rabbitmq know that the match has stopped
+# if the match ends, let the rabbitmq know that the match has ended
+# check the massage for the log and event storage configuration
+# upload the log and event of the match to S3
+# let the rabbitmq know that the match has been uploaded to S3
+
+
+
