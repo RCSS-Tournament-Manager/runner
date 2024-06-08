@@ -25,18 +25,19 @@ def required_fields(
 
     @wraps(func)
     async def wrapper(data, *args, **kwargs):
-        all_fields_found = True
+        missing_fields = []
         for field in fields:
             found, missing = recursive_check(data, field)
             reply = kwargs.get("reply")
             if not found:
                 all_fields_found = False
-                if reply != None:
-                    await reply(f"Missing field: {missing}")
+                missing_fields.append(missing)
                 continue
 
-        if not all_fields_found:
+        if len(missing_fields) > 0:
+            await reply({"missing": missing_fields})
             return
+            
         if inspect.iscoroutinefunction(func):
             await func(data=data, *args, **kwargs)
         else:

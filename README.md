@@ -38,7 +38,7 @@ The program that runs the games using docker and store the logs and events in S3
 
 * test commands example
     ```bash
-    pipenv run python ./test.py ping_test
+    pipenv run python ./test.py name_test
     ```
 
 
