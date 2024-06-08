@@ -6,7 +6,9 @@ REQUEST_QUEUE_NAME = "request_queue"
 RESPONSE_QUEUE_NAME = "response_queue"
 
 
-async def send_message(loop):
+async def run():
+    loop = asyncio.get_event_loop()
+    
     connection = await aio_pika.connect_robust(RABBITMQ_URL, loop=loop)
 
     async with connection:
@@ -44,7 +46,3 @@ async def receive_response(connection, correlation_id):
                         print(f"Received response: {response_body}")
                         break
 
-
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(send_message(loop))

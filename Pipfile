@@ -12,6 +12,7 @@ aio-pika = "*"
 aiormq = "*"
 colorlog = "*"
 minio = "*"
+pika = "*"
 
 [dev-packages]
 

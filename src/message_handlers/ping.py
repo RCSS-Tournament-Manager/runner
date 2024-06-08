@@ -1,12 +1,28 @@
 import asyncio
 
+from src.decorators import required_fields
+from src.docker import Docker
+from src.logger import get_logger
 from src.storage import MinioClient
 
+logger = get_logger(__name__)
 
-async def ping_command_handler(data: dict, storage: MinioClient, **kwargs):
-    import os
-    await storage.upload_file(
-        bucket_name="ping-pong",
-        object_name="ping.txt",
-        file_path=os.path.join(os.path.dirname(__file__),'..','..', "test.py"),
-    )
+@required_fields(fields=[
+    "file.bucket",
+    
+    "build_id",
+        
+    "image_name",
+    "image_tag",
+    
+    "file.type",
+    "file.file_id",
+])
+async def ping_command_handler(
+    data: dict, 
+    docker: Docker,
+    storage: MinioClient,
+    reply, 
+    **kwargs
+):
+    await reply("Pong")

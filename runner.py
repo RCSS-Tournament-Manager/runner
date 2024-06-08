@@ -10,9 +10,11 @@ from src.message_handlers.score import score_command_handler
 from src.message_handlers.status import status_command_handler
 from src.message_hanlder import MessageHandler
 from src.rabbitmq import RabbitMQ
+from src.routes.status import handle_status
 from src.storage import MinioClient
 from src.webserver import Webserver
-from test2 import handle_status
+
+
 
 
 logger = get_logger(__name__)
@@ -118,7 +120,6 @@ async def main(loop):
     
     mh.add_command_handler("run_match", run_match_command_handler)
     mh.add_command_handler("kill_match", kill_match_command_handler)
-    mh.add_command_handler("run_match", ping_command_handler)
     mh.add_command_handler("score", score_command_handler)
     mh.add_command_handler("status", status_command_handler)
     mh.add_command_handler("ping", ping_command_handler)
