@@ -2,7 +2,6 @@ services:
   
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq
     hostname: rabbitmq
     ports:
       - "5672:5672"
@@ -16,7 +15,6 @@ services:
 
   registry:
     image: registry:2
-    container_name: registry
     hostname: registry
     ports:
       - "5000:5000"
@@ -30,7 +28,6 @@ services:
 
   minio:
     image: minio/minio
-    container_name: minio
     hostname: minio
     ports:
       - "9000:9000"

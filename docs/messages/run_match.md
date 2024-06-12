@@ -7,17 +7,12 @@ message format :
         "match_id": "1234",
         
         "team_right": {
-            "type": "docker",
-            image:{
-                "name": "teamA",
-                "image": "docker.io/teamA:latest",
-                "config": {
-                    "host": "",
-                    "port": 1234,
-                    "username": "username",
-                    "password": "password",
-                }  
+            "_type": "docker",
+            "_config" :{
+                
             },
+            "image": "docker.io/teamA:latest",
+            "team_name": "teamA",
             "config": {
                 core_start: 0,
                 core_end: 11,
@@ -25,36 +20,22 @@ message format :
         },
         
         "team_left": {
-            "type": "docker",
-            image:{
-                "name": "teamB",
-                "image": "docker.io/teamB:latest",
-                "config": {
-                    "host": "",
-                    "port": 1234,
-                    "username": "username",
-                    "password": "password",
-                }  
+            "_type": "docker",
+            "_config" :{
+                
             },
+            "image": "docker.io/teamB:latest",
+            "team_name": "teamB",
             "config": {
                 core_start: 0,
                 core_end: 11,
-            }  
+            }
         },
         
         
         "rcssserver": {
-            "type": "docker",
-            "image":{
-                "name": "server",
-                "image": "docker.io/server:latest",
-                "config": {
-                    "host": "",
-                    "port": 1234,
-                    "username": "username",
-                    "password": "password",
-                },
-            },
+            "_type": "docker",
+            "image":"docker.io/rcssserver:latest",
             "config": {
                 core_start: 0,
                 core_end: 11,

@@ -23,9 +23,7 @@ def init_logger(name='root'):
     
     _muted = colorlog.INFO if DEBUG_ENV else colorlog.WARNING
     _shut_upped = colorlog.ERROR if DEBUG_ENV else colorlog.CRITICAL
-    # getLogger('urllib3.connectionpool').setLevel(_muted)
     _logger = getLogger('watchdog')
-    # getLogger('apscheduler').setLevel(colorlog.WARNING)
     
     return logger
 

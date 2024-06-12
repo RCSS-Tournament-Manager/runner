@@ -16,13 +16,23 @@ class MessageHandler:
         self.message_handlers = {}
 
     def add_command_handler(self, command, handler):
+        """Try to connect messages to its function
+
+        Args:
+            command (str) : command type (like: build)
+            handler : function that should run for this command 
+        """
         self.message_handlers[command] = handler
 
-    # reply("something")
-    # reply({"key": "value"})
+    
     @staticmethod
     def reply_wrapper(rabbit: RabbitMQ, reply_channel):
         async def reply(message):
+            """Replying the input command
+
+            Args:
+                message (str): replying text
+            """
             out_message = {}
             
             if type(message) == str:
@@ -43,6 +53,11 @@ class MessageHandler:
         return
 
     async def message_processor(self, message: aio_pika.IncomingMessage):
+        """Take the json message from sender and proccess its data 
+
+        Args:
+            message (aio_pika.IncomingMessage): message from provider
+        """
         async with message.process():
             body = message.body.decode()
             data = json.loads(body)
