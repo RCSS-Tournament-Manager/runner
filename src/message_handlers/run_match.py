@@ -5,40 +5,8 @@ from src.rabbitmq import RabbitMQ
 from src.storage import MinioClient
 from src.utils.client_initializer import initialize_clients
 
-
-async def run_team_docker(
-    player_prefix: str,
-    team_left_image_name: str,
-    core_start: int,
-    core_end: int,
-    docker_i: Docker,
-):
-    pass
-
-
-async def run_server_docker(
-    server_image_name: str, core_start: int, core_end: int, docker_i: Docker
-):
-    pass
-
-
-async def config_validator(config: dict):
-    client_parsed = []
-    return client_parsed
-
-
-async def add_client_to_external_connections(
-    config: dict,
-    client_parsed: list,
-    default_docker: Docker,
-    defult_storage: MinioClient,
-    default_rabbit: RabbitMQ,
-):
-    ctx = config
-    return ctx
-
-
 logger = get_logger(__name__)
+
 
 @required_fields(
     fields=[
@@ -73,16 +41,68 @@ async def run_match_command_handler(
     tmp_file = None
 
     async def log_reply(message, log_fn=logger.info, e=None):
-        log_fn(message)
+        if e:
+            log_fn(f"{message}: {e}")
+        else:
+            log_fn(message)
         await reply(message)
-        
+
     extracted_data, errors = initialize_clients(
         data, docker=docker, storage=storage, **kwargs
     )
     for error in errors:
-        logger.error(error)
-        await reply(error)
-    # run the match
+        await log_reply(error, logger.error)
+
+    # ----------------------------------
+    # pull images
+    # ----------------------------------
+    
+    # ----- pull team right image
+    try:
+        tr = data["team_right"]
+        client = data["team_right"]["_client"]
+        for output in client.pull_from_registry(
+            image_name=tr["image_name"],
+            image_tag=tr["tag"],
+        ):
+            await log_reply(output, logger.info)
+    except Exception as e:
+        await log_reply(f"Failed to pull right team image", logger.error, e)
+        return
+
+    # ----- pull team left image
+    try:
+        tl = data["team_left"]
+        client = data["team_left"]["_client"]
+        for output in client.pull_from_registry(
+            image_name=tl["image_name"],
+            image_tag=tl["tag"],
+        ):
+            await log_reply(output, logger.info)
+    except Exception as e:
+        await log_reply(f"Failed to pull left team image", logger.error, e)
+        return
+
+    # ----- pull rcssserver image
+    try:
+        rcss = data["rcssserver"]
+        client = data["rcssserver"]["_client"]
+        for output in client.pull_from_registry(
+            image_name=rcss["image_name"],
+            image_tag=rcss["tag"],
+        ):
+            await log_reply(output, logger.info)
+    except Exception as e:
+        await log_reply(f"Failed to pull rcssserver image", logger.error, e)
+        return
+    
+    # ----------------------------------
+    # run server
+    # ----------------------------------
+    
+    await log_reply("Starting rcssserver...")
+    
+    
     # create tasks for streams
 
     pass

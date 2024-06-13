@@ -13,6 +13,7 @@ aiormq = "*"
 colorlog = "*"
 minio = "*"
 pika = "*"
+aiodocker = "*"
 
 [dev-packages]
 

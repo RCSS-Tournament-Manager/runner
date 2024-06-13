@@ -11,7 +11,8 @@ message format :
             "_config" :{
                 
             },
-            "image": "docker.io/teamA:latest",
+            "image_name": "teamA",
+            "tag": "latest",
             "team_name": "teamA",
             "config": {
                 core_start: 0,
@@ -24,7 +25,8 @@ message format :
             "_config" :{
                 
             },
-            "image": "docker.io/teamB:latest",
+            "image_name": "teamB",
+            "tag": "latest",
             "team_name": "teamB",
             "config": {
                 core_start: 0,
@@ -35,7 +37,8 @@ message format :
         
         "rcssserver": {
             "_type": "docker",
-            "image":"docker.io/rcssserver:latest",
+            "image_name": "teamB",
+            "tag": "latest",
             "config": {
                 core_start: 0,
                 core_end: 11,
