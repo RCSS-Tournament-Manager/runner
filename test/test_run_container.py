@@ -1,18 +1,42 @@
 from src.docker import Docker
 from src.logger import get_logger
 import asyncio
-import concurrent.futures
+from datetime import datetime
 
 logger = get_logger(__name__)
 
-def log_container(container):
-    """Logs the output of a running container."""
-    try:
-        for log in container.logs(stream=True):
-            print(f'+ {log.decode("utf-8")}')
-    except asyncio.CancelledError:
-        print("Logging task has been cancelled")
-        raise
+async def read_log(container,docker_instance):
+    last_read = datetime.now()
+    container_id = container.id 
+    while True:
+        # read the logs
+        # logs = container.logs(since=last_read,stdout=True,stderr=True,timestamps=True)
+        # logs = logs.decode("utf-8")
+        # # parse and seprate each line 
+        # logs = logs.split("\n")
+        # for log in logs:
+        #     if log:
+        #         logger.info(f"+ {log}")
+        # # print(f"+ {logs}")
+        # last_read = datetime.now()
+        
+        # https://stackoverflow.com/questions/67650841/how-to-find-memory-usage-with-memory-profiler-python
+         
+        
+        
+        logs = docker_instance.api.logs(container=container_id,stdout=True,stderr=True,timestamps=True, since=last_read)
+        logs = logs.decode("utf-8")
+        logs = logs.split("\n")
+        for log in logs:
+            if log:
+                logger.info(f"+ {log}")
+        
+        # print('\n\n\n')
+        # last_read must be UNIX timestamp for the logs staring point. like 
+        last_read = datetime.now().timestamp()
+        
+        await asyncio.sleep(1)
+    # pass
 
 async def run():
     docker_instance = Docker()
@@ -22,33 +46,20 @@ async def run():
     for line in docker_instance.pull_from_registry("nginx", "latest", registry="docker.io"):
         logger.info(line)
     
-    # Run the nginx container and log its output
     container = docker_instance.run_container(
         image_name="nginx",
         image_tag="latest",
-        command="nginx -g 'daemon off;'",
+        command=None,
         registry="docker.io",
         ports={'80/tcp': 8080},
         network="team-builder-dev_network",
-        name="nginx_test_container"
+        name="nginx_test_container",
     )
-    loop = asyncio.get_event_loop()
+    # create task to read logs
+    task = asyncio.create_task(read_log(container,docker_instance))
     
-    # Use run_in_executor to run the blocking function in a separate thread
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        t2 = loop.create_task(loop.run_in_executor(executor, log_container, container))
-    # Start a separate task to log the container's output
-
-    # Wait for 10 seconds and then cancel the logging task
-    logger.info(f"Waiting for 10 seconds before cancelling the logging task")
     await asyncio.sleep(10)
-    t2.cancel()
-
-    try:
-        await t2
-    except asyncio.CancelledError:
-        pass
-
+    
     # Now kill the container and log its exit code
     logger.info(f"Now we kill the container")
     docker_instance.kill_container(container=container)

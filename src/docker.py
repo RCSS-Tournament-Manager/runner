@@ -118,7 +118,7 @@ class Docker:
         self,
         image_name,
         image_tag,
-        command,
+        command=None,
         detach=True,
         remove=True,
         registry=None,
@@ -135,12 +135,19 @@ class Docker:
         """
         if registry == None:
             registry = self.default_registry
-        container = self.client.containers.run(
-            image=f"{registry}/{image_name}:{image_tag}",
-            command=command,
-            detach=detach,
-            remove=remove,
+        
+        run_arg = {
+            "image": f"{registry}/{image_name}:{image_tag}",
+            "detach": detach,
+            "remove": remove,
             **kwargs
+        }
+        
+        if command:
+            run_arg["command"] = command
+        
+        container = self.client.containers.run(
+            **run_arg
         )
         return container
 

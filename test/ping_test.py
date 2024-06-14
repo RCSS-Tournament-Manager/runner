@@ -45,9 +45,9 @@ async def run():
     loop  = asyncio.get_event_loop()
     async with connection:
         channel = await connection.channel()
-        loop.create_task(send_run_message(channel,"my_queue"))
+        loop.create_task(send_run_message(channel,"runner_queue"))
         await asyncio.sleep(2)  
-        loop.create_task(send_run_message(channel,"my_queue"))
+        loop.create_task(send_run_message(channel,"runner_queue"))
 
         # wait for all tasks to be done
         await asyncio.gather(*asyncio.all_tasks())
