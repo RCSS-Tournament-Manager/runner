@@ -35,7 +35,7 @@ async def main(loop):
     # ---------------------- 
     rabbit = RabbitMQ(
         loop=loop, 
-        server="amqp://test:test@localhost/", 
+        server="amqp://admin:admin@localhost/", 
         queue="runner_queue"
     )
     logger.info("rabbitmq consumer started")

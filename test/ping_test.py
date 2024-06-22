@@ -41,7 +41,7 @@ async def send_run_message(channel,send_queue):
                     break
 
 async def run():
-    connection = await aio_pika.connect_robust("amqp://test:test@localhost/")
+    connection = await aio_pika.connect_robust("amqp://admin:admin@localhost/")
     loop  = asyncio.get_event_loop()
     async with connection:
         channel = await connection.channel()
