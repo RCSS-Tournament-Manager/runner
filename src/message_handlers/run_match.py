@@ -2,6 +2,7 @@ from src.decorators import required_fields
 from src.docker import Docker
 from src.logger import get_logger
 from src.rabbitmq import RabbitMQ
+from src.states import StateManager
 from src.storage import MinioClient
 from src.utils.client_initializer import initialize_clients
 from datetime import datetime
@@ -28,10 +29,18 @@ logger = get_logger(__name__)
     ]
 )
 async def run_match_command_handler(
-    data: dict, docker: Docker, storage: MinioClient, reply, **kwargs
+    data: dict, 
+    docker: Docker, 
+    storage: MinioClient, 
+    state_manager: StateManager,
+    reply, 
+    **kwargs
 ):
     # check the validation of the message
     match_id = data["match_id"]
+    
+    network_name ="team-builder-dev_network"
+    server_tcp_port = 6000
 
     async def log_reply(message, log_fn=logger.info, e=None):
         if e:
@@ -100,34 +109,32 @@ async def run_match_command_handler(
      
        
     async def read_server_log(container, docker_instance, event):
-        last_read = datetime.now()
         container_id = container.id 
+        since = datetime.now().timestamp()
         while True:
             try:
-                logs = docker_instance.api.logs(container=container_id, stdout=True, stderr=True, timestamps=True , since = last_read)
+                await asyncio.sleep(1)
+                until = datetime.now().timestamp()
+                logs = docker_instance.api.logs(
+                    container=container_id,
+                    stdout=True,
+                    stderr=True,
+                    timestamps=True, 
+                    since=since,
+                    until=until
+                )
+                since = until  # Update 'since' to the 'until' timestamp
                 logs = logs.decode("utf-8")
-                import re
-                all = re.findall(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}Z", logs)
-                if all:
-                    for i in range(len(all)):
-                        if datetime.fromisoformat(all[i]) > last_read:
-                            last_read = all[i]
-                    
-
                 logs = logs.split("\n")
-                
                 for log in logs:
                     if log:
-                        # find all timestamp with regex the last one is the most recent
-                        await log_reply(f"{log}")
+                        logger.info(f"+ {log}")
+                        # Check for specific log message to set the event
                         if "Using simulator's random seed as Hetero Player Seed:" in log:
                             event.set()
-                await asyncio.sleep(1)
             except Exception as e:
-                await log_reply("Failed to read server logs", logger.error, e)
+                logger.error("Failed to read server logs", exc_info=e)
                 await asyncio.sleep(50)
-    
-    tcp_port = 6000
 
     try:
         # create container
@@ -135,8 +142,8 @@ async def run_match_command_handler(
             image_name=d["rcssserver"]["image_name"],
             image_tag=d["rcssserver"]["tag"],
             command=None,
-            ports={f'{tcp_port}/tcp': tcp_port},
-            network="team-builder-dev_network",
+            ports={f'{server_tcp_port}/tcp': server_tcp_port},
+            network=network_name,
             name="rcss_server_test",
         )
         
@@ -154,8 +161,10 @@ async def run_match_command_handler(
 
 
     # ----------------------------------
-    server_ip = server_container.attrs["NetworkSettings"]["IPAddress"]
+    container_info = d["rcssserver"]["_client"].api.inspect_container(server_container.id)
+    server_ip = container_info["NetworkSettings"]["Networks"][network_name]["IPAddress"]
     logger.info(f"Server IP: {server_ip}")
+    
     
     for i in range(11):
         try:
@@ -163,29 +172,30 @@ async def run_match_command_handler(
             container = d["team_right"]["_client"].run_container(
                 image_name=d["team_right"]["image_name"],
                 image_tag=d["team_right"]["tag"],
-                command=None,
-                network="team-builder-dev_network",
-                name=f"{d["team_right"]["team_name"]}_{i}",
-                log_config=None,
+                network=network_name,
+                name=f"r_{d["team_right"]["team_name"]}_{i}",
                 environment={"num": i, "ip": server_ip},
+                log_config=None
             )
             await log_reply(f"team_right_{i} container created")
+            asyncio.sleep(1)
         except Exception as e:
             await log_reply("Failed to connect right team", logger.error, e)
             return
+        
     for i in range(11):
         try:
             # create container
             container = d["team_left"]["_client"].run_container(
                 image_name=d["team_left"]["image_name"],
                 image_tag=d["team_left"]["tag"],
-                command=None,
-                network="team-builder-dev_network",
-                name=f"{d["team_left"]["team_name"]}_{i}",
+                network=network_name,
+                name=f"l_{d["team_left"]["team_name"]}_{i}",
                 environment={"num": i, "ip": server_ip},
-                log_config=None,
+                log_config=None
             )
             await log_reply(f"team_left_{i} container created")
+            asyncio.sleep(1)
         except Exception as e:
             await log_reply("Failed to connect left team", logger.error, e)
             return

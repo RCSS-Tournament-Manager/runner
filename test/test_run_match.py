@@ -17,9 +17,9 @@ def data():
         
         "team_right": {
             "_type": "docker",
-            "image_name": "cyrus2d",
+            "image_name": "agent_r",
             "tag": "latest",
-            "team_name": "cyrusA",
+            "team_name": "agent_r",
             "config": {
                 "core_start": 0,
                 "core_end": 11,
@@ -28,9 +28,9 @@ def data():
         
         "team_left": {
             "_type": "docker",
-            "image_name": "cyrus2d",
+            "image_name": "agent_l",
             "tag": "latest",
-            "team_name": "cyrusB",
+            "team_name": "agent_l",
             "config": {
                 "core_start": 0,
                 "core_end": 11,

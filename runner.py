@@ -11,6 +11,7 @@ from src.message_handlers.status import status_command_handler
 from src.message_hanlder import MessageHandler
 from src.rabbitmq import RabbitMQ
 from src.routes.status import handle_status
+from src.states import StateManager
 from src.storage import MinioClient
 from src.webserver import Webserver
 
@@ -91,7 +92,7 @@ async def main(loop):
     # ----------------------
     server = Webserver(
         host="localhost",
-        port=8080
+        port=8081
     )
     
     # --- routes
@@ -105,7 +106,10 @@ async def main(loop):
         exit(1)
     
 
-
+    # ----------------------
+    # State Manager
+    # ----------------------
+    state_manager = StateManager()
 
 
     # ----------------------
@@ -115,7 +119,8 @@ async def main(loop):
         rabbit=rabbit,
         storage=storage,
         docker=docker,
-        server=server
+        server=server,
+        state_manager=state_manager
     )
     
     mh.add_command_handler("run_match", run_match_command_handler)
