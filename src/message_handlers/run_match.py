@@ -122,7 +122,7 @@ async def run_match_command_handler(
 
         await log_reply("Starting rcssserver...")
 
-        async def read_server_log(container, docker_instance, event):
+        async def read_server_log(container, docker_instance):
             container_id = container.id 
             since = datetime.now().timestamp()
             while True:
@@ -145,7 +145,7 @@ async def run_match_command_handler(
                             logger.info(f"+ {log}")
                             # Check for specific log message to set the event
                             if "Using simulator's random seed as Hetero Player Seed:" in log:
-                                event.set()
+                                await state_manager.update_state(match_id, "server_started")
                 except Exception as e:
                     logger.error("Failed to read server logs", exc_info=e)
                     await asyncio.sleep(50)
@@ -165,11 +165,10 @@ async def run_match_command_handler(
             await state_manager.update_state(match_id, "failed")
             return
 
-        event = asyncio.Event()
-        read_server_task = asyncio.create_task(read_server_log(server_container, d["rcssserver"]["_client"], event))
+        read_server_task = asyncio.create_task(read_server_log(server_container, d["rcssserver"]["_client"]))
 
         # wait until the specific log message is found
-        await event.wait()
+        await state_manager.get_event(match_id, 'server_started').wait()
         await log_reply("rcssserver is ready")
 
         # Update state to running_match

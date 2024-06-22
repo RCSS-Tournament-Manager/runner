@@ -1,6 +1,6 @@
-import aio_pika
 import json
 import inspect
+from aiostomp import AioStomp
 from src.logger import get_logger
 from src.rabbitmq import RabbitMQ
 
@@ -13,11 +13,7 @@ class MessageHandler:
         self.singletons = singletons
         self.message_handlers = {}
 
-    def add_command_handler(
-        self, 
-        command, 
-        handler
-    ):
+    def add_command_handler(self, command, handler):
         """Try to connect messages to its function
 
         Args:
@@ -27,10 +23,7 @@ class MessageHandler:
         self.message_handlers[command] = handler
 
     @staticmethod
-    def reply_wrapper(
-        rabbit: RabbitMQ, 
-        reply_channel
-    ):
+    def reply_wrapper(rabbit: RabbitMQ, reply_channel):
         async def reply(message):
             """Replying the input command
 
@@ -44,56 +37,49 @@ class MessageHandler:
             elif isinstance(message, dict):
                 out_message = message
 
-            await rabbit.channel.default_exchange.publish(
-                aio_pika.Message(body=json.dumps(out_message).encode()),
-                routing_key=reply_channel
-            )
+            await rabbit.send_message(json.dumps(out_message), queue=reply_channel)
 
         return reply
 
     @staticmethod
     async def empty_reply(*args, **kwargs):
-        logger.debug("Empty reply")
+        logger.info("Empty reply")
         return
 
-    async def message_processor(
-        self, 
-        message: aio_pika.IncomingMessage
-    ):
+    async def message_processor(self, frame, message):
         """Take the json message from sender and process its data 
 
         Args:
-            message (aio_pika.IncomingMessage): message from provider
+            message (str): message from provider
         """
-        async with message.process():
-            body = message.body.decode()
-            data = json.loads(body)
-            command = data.get("command")
-            body = data.get("data")
-            reply = MessageHandler.empty_reply
+        data = json.loads(message)
+        command = data.get("command")
+        body = data.get("data")
+        reply = MessageHandler.empty_reply
 
-            if message.reply_to:
-                reply = MessageHandler.reply_wrapper(
-                    self.singletons.get('rabbit'), 
-                    message.reply_to
-                )
+        if 'reply-to' in frame.headers:
+            reply = MessageHandler.reply_wrapper(
+                self.singletons.get('rabbit'), 
+                frame.headers['reply-to']
+            )
 
-            logger.info(f"Received message: {data}")
+        print(frame.headers)
+        logger.info(f"Received message: {data}")
 
-            if command in self.message_handlers:
-                function_input = {
-                    "data": body, 
-                    "reply": reply, 
-                    **self.singletons
-                }
+        if command in self.message_handlers:
+            function_input = {
+                "data": body, 
+                "reply": reply, 
+                **self.singletons
+            }
 
-                handler = self.message_handlers[command]
+            handler = self.message_handlers[command]
 
-                if inspect.iscoroutinefunction(handler):
-                    await handler(**function_input)
-                else:
-                    handler(**function_input)
+            if inspect.iscoroutinefunction(handler):
+                await handler(**function_input)
             else:
-                logger.error(f"Unknown command: {command}")
-                logger.debug(f"Known commands: {self.message_handlers.keys()}")
-                return
+                handler(**function_input)
+        else:
+            logger.error(f"Unknown command: {command}")
+            logger.debug(f"Known commands: {self.message_handlers.keys()}")
+            return

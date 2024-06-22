@@ -35,8 +35,11 @@ async def main(loop):
     # ---------------------- 
     rabbit = RabbitMQ(
         loop=loop, 
-        server="amqp://admin:admin@localhost/", 
-        queue="runner_queue"
+        server="localhost", 
+        port=61613,
+        queue="runner_queue",
+        username="admin",
+        password="admin"
     )
     logger.info("rabbitmq consumer started")
     try:

@@ -11,6 +11,7 @@ class StateManager:
         "started",
         "fetching_images",
         "running_server",
+        "server_started",
         "running_match",
         "match_started",
         "finished",
